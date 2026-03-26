@@ -1,0 +1,236 @@
+// prisma/schema.prisma
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // bcrypt hash — null si se registró con Google
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  slug          String?   @unique
+  businessName  String?
+  bio           String?
+  phone         String?
+  timezone      String    @default("America/Argentina/Buenos_Aires")
+  specialty     String?
+  location      String?
+
+  bookingMinDays Int       @default(0)   // mínimo X días de antelación (0 = hoy mismo)
+  bookingMaxDays Int       @default(60)  // horizonte máximo en días
+  allowDuplicateBooking Boolean @default(false) // si false, bloquea un email que ya tiene turno vigente
+
+  primaryColor  String    @default("#3b5bdb")
+  accentColor   String    @default("#7c3aed")
+  logoUrl       String?
+
+  // Google Calendar — se vincula opcionalmente desde Settings
+  googleEmail        String?   // email de la cuenta Google vinculada
+  googleAccessToken  String?
+  googleRefreshToken String?
+  googleCalendarId   String?   // ID del calendario creado/vinculado
+  tokenExpiresAt     DateTime?
+
+  role             String  @default("PROFESSIONAL")
+  membershipStatus String  @default("FREE_TRIAL")
+  trialEndsAt      DateTime?
+  subscriptionId   String?
+  subscriptionPlan    String?   // "MONTHLY" | "ANNUAL"
+  subscriptionEndsAt  DateTime? // cuándo vence la membresía paga
+
+  accounts      Account[]
+  sessions      Session[]
+  services      Service[]
+  availability  Availability[]
+  bookings      Booking[]      @relation("ProfessionalBookings")
+
+  @@index([slug])
+  @@index([email])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Token para verificación de email en registro con credenciales
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique @default(cuid())
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  duration    Int
+  price       Float?
+  currency    String   @default("ARS")
+  color       String   @default("#3b5bdb")
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings Booking[]
+
+  @@index([userId])
+}
+
+model Availability {
+  id        String  @id @default(cuid())
+  userId    String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  isActive  Boolean @default(true)
+  label     String? @default("")
+
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, dayOfWeek])
+}
+
+model AvailabilityOverride {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime
+  type      String
+  startTime String?
+  endTime   String?
+  reason    String?
+
+  @@index([userId])
+}
+
+model Booking {
+  id             String   @id @default(cuid())
+  professionalId String
+  serviceId      String
+
+  clientName     String
+  clientEmail    String
+  clientPhone    String?
+  clientNotes    String?
+
+  startTime      DateTime
+  endTime        DateTime
+  timezone       String   @default("America/Argentina/Buenos_Aires")
+
+  status         String   @default("CONFIRMED")
+  cancelReason   String?
+
+  googleEventId  String?
+  cancelToken    String   @unique @default(cuid())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  professional User    @relation("ProfessionalBookings", fields: [professionalId], references: [id])
+  service      Service @relation(fields: [serviceId], references: [id])
+
+  @@index([professionalId])
+  @@index([clientEmail])
+  @@index([startTime])
+  @@index([cancelToken])
+}
+
+// Registro de pagos de membresía
+// status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED"
+model Payment {
+  id              String   @id @default(cuid())
+  userId          String
+  mpPaymentId     String?  @unique  // ID del pago en MercadoPago
+  mpPreferenceId  String?           // ID de la preferencia MP
+  plan            String            // "MONTHLY" | "ANNUAL"
+  amount          Float
+  currency        String   @default("ARS")
+  status          String   @default("PENDING")
+  daysAdded       Int               // días que agrega al plan
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([mpPaymentId])
+  @@index([mpPreferenceId])
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique @default(cuid())
+  expires   DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+}
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  userId      String
+  key         String   @unique   // Bearer token: "bdk_live_xxxx"
+  name        String             // Ej: "Mi CRM", "Mensajeria Bot"
+  isActive    Boolean  @default(true)
+  lastUsedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([key])
+}

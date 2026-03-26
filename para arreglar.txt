@@ -1,0 +1,54 @@
+npm install --legacy-peer-deps
+npm run db:push
+npm run db:seed
+npm run dev
+vercel deploy --prod
+
+1- Cuando la prueba o subcripcion esta vencida debe redirigir la agenda a book.drylus.com asi ningun paciente puede reservar y solo debe permitir ingresar a dashboard asi no puede editar ni ver la agenda. 
+2- 
+4- 
+
+Mejorar la estetica de la pagina de login. Quiero que tenga detalles de la funcionalidad del sitio. Te paso una imagen de como quiero que quede y las imagenes de los iconos y del logo. Tener en cuenta que las imagenes son png sin fondo. Lo que se ve negro de fondo debe ser sin fondo. Tener en cuenta para el modo vertical smartphone que se vea muy bien ajustado al ancho del telefono. con las virtudes (iconos) arriba y el login abajo.
+
+
+*- implementar una api para que desde un curl se pueda reservar un turno (que solo carge los datos personales (nombre, telefono, email) asi desde otros sitios el profesional pueda generar reservas para sus pacientes. https://drylusbook.vercel.app/book/lucas-forni?clientName=Lucas%20Forni&clientEmail=lucas.forni@gmail.com&clientPhone=543576461162
+
+-----------------------------------------------------------------------------
+prueba MP
+APP_USR-37250849-ce11-447f-ae2c-120ccf80ba73
+APP_USR-8843619940212060-032104-9529473926898ae12ed73980a1f11f1c-3281359039
+.env
+TEST
+MP_ACCESS_TOKEN=APP_USR-8843619940212060-032104-9529473926898ae12ed73980a1f11f1c-3281359039
+
+PRODUCTION
+MP_ACCESS_TOKEN=APP_USR-7251772940928024-032104-19b0b7518fac7cb2fcd8e19aba51d8c4-70392576
+
+PLAN_MONTHLY_PRICE=5000
+PLAN_ANNUAL_PRICE=45000
+NEXT_PUBLIC_PLAN_MONTHLY_PRICE=5000
+NEXT_PUBLIC_PLAN_ANNUAL_PRICE=45000
+
+curl -X POST https://drylusbook.vercel.app/api/setup -H "x-setup-secret: clave123"
+curl -X POST https://drylusbook.vercel.app/api/setup -H "x-setup-secret: clave123"
+------------------------------------------------------------------------------
+api book.drylus
+bdk_live_6c6258dce1e560d67f8fa7970b3161220cb67fca011563d3
+curl -X GET "https://book.drylus.com/api/v1/bookings?serviceId=SERVICE_ID&date=2026-03-25" -H "Authorization: bdk_live_6c6258dce1e560d67f8fa7970b3161220cb67fca011563d3"
+curl -X POST "https://book.drylus.com/api/v1/bookings" -H "Authorization: bdk_live_6c6258dce1e560d67f8fa7970b3161220cb67fca011563d3" -H "Content-Type: application/json" -d '{/"serviceId/": /"SERVICE_ID/",/"startTime/": /"2026-03-30T16:00:00Z/",/"clientName/": /"Juan García/",/"clientEmail/": /"juan@email.com/",/"clientPhone/": /"11 4567-8901/",/"clientNotes/": /"Primera consulta/"}'
+--------------------------------------------------------------------------------
+curl -X POST https://turnoapp-three.vercel.app/admin/login -H "Content-Type: application/json" -d "{\"usuario\":\"admin\",\"password\":\"TuNuevaPass123\"}"
+
+curl https://drylusbook.vercel.app/api/setup -H "x-setup-secret: clave123"
+curl -X POST https://drylusbook.vercel.app/api/setup -H "x-setup-secret: clave123"
+
+ERROR: de vez en cuando sale n error "
+1 of 1 error
+Next.js (14.2.5) is outdated (learn more)
+
+Unhandled Runtime Error
+Error: Text content does not match server-rendered HTML.
+See more info here: https://nextjs.org/docs/messages/react-hydration-error
+
+Text content did not match. Server: "09:00 a. m." Client: "09:00 a. m."
+..."
